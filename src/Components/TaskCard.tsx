@@ -1,107 +1,80 @@
-import { BiTrash } from "react-icons/bi";
-import { Id, Task } from "../types";
-import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { MdDelete, MdEdit } from "react-icons/md";
+import { useState } from "react";
+
+interface Task {
+  id: number | string;
+  columnId: number | string;
+  content: string;
+}
 
 interface Props {
   task: Task;
-  deleteTask: (id: Id) => void;
-  updateTask: (id: Id, content: string) => void;
+  deleteTask: (id: number | string) => void;
+  editTask: (id: number | string, newContent: string) => void;
 }
 
-function TaskCard({ task, deleteTask, updateTask }: Props) {
-  const [mouseIsOver, setMouseIsOver] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+function TaskCard({ task, deleteTask, editTask }: Props) {
+  const { setNodeRef, attributes, listeners, transform, transition } =
+    useSortable({
+      id: task.id,
+      data: { type: "Task", task },
+    });
 
-  const {
-    setNodeRef,
-    attributes,
-    listeners,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: task.id,
-    data: {
-      type: "Task",
-      task,
-    },
-    disabled: editMode,
-  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [newContent, setNewContent] = useState(task.content);
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const toggleEditMode = () => {
-    setEditMode((prev) => !prev);
-    setMouseIsOver(true);
-  };
+  function handleEdit() {
+    setIsEditing(true);
+  }
 
-  if (isDragging) {
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="opacity-30 bg-mainBackgroundColor p-3 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2  cursor-grab relative"
-      />
-    );
+  function handleSave() {
+    editTask(task.id, newContent);
+    setIsEditing(false);
   }
-  if (editMode) {
-    return (
-      <>
-        <div
-          ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
-          className="bg-mainBackgroundColor p-3 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative"
-        >
-          <textarea
-            className="h-[90%] w-full resize-none border-none rounded bg-transparent text-white focus-outline-none"
-            value={task.content}
-            autoFocus
-            placeholder="Task Content here"
-            onBlur={toggleEditMode}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.shiftKey) toggleEditMode();
-            }}
-            onChange={(e) => updateTask(task.id, e.target.value)}
-          ></textarea>
-        </div>
-      </>
-    );
-  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      onClick={toggleEditMode}
-      className="bg-mainBackgroundColor p-3 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task"
-      onMouseEnter={() => {
-        setMouseIsOver(true);
-      }}
-      onMouseLeave={() => {
-        setMouseIsOver(false);
-      }}
+      className="p-2 bg-black rounded shadow flex justify-between items-center gap-2"
     >
-      <p className="my-auto h-[90%] w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap">
-        {task.content}
-      </p>
-      {mouseIsOver && (
-        <button
-          onClick={() => {
-            deleteTask(task.id);
-          }}
-          className="stroke-white absolute right-4 top-1/2 -translate-y-1/2 bg-columnBackgroundColor p-2 rounded hover:opacity-100"
-        >
-          <BiTrash />
-        </button>
+      {isEditing ? (
+        <input
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          className="border rounded p-1 flex-grow"
+        />
+      ) : (
+        <span>{task.content}</span>
       )}
+      <div className="flex gap-2">
+        {isEditing ? (
+          <button
+            onClick={handleSave}
+            className="bg-green-500 text-black p-1 rounded"
+          >
+            Save
+          </button>
+        ) : (
+          <MdEdit
+            onClick={handleEdit}
+            className="cursor-pointer text-blue-500"
+          />
+        )}
+        <MdDelete
+          onClick={() => deleteTask(task.id)}
+          className="cursor-pointer text-red-500"
+        />
+      </div>
     </div>
   );
 }
