@@ -51,7 +51,8 @@ function TaskCard({ task, deleteTask, editTask }: Props) {
         <input
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
-          className="border rounded p-1 flex-grow"
+          className="border rounded p-1 flex-grow text-black"
+          style={{ color: "black" }} // Ensures text color is black
         />
       ) : (
         <span>{task.content}</span>
